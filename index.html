@@ -186,6 +186,29 @@
             display: none;
         }
 
+        .activity-field {
+            margin: 0 0 1rem 0;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .activity-field label {
+            color: #aaa;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .activity-field input {
+            flex: 1;
+            padding: 0.75rem;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 1rem;
+        }
+
         .notes-field {
             margin: 1rem 0;
         }
@@ -238,12 +261,18 @@
                 <button class="btn-disconnect" id="disconnectBtn">Disconnect from Dropbox</button>
             </div>
 
+            <div class="activity-field">
+                <label>@</label>
+                <input type="text" id="activity" value="writing" list="activityList" autocomplete="off">
+                <datalist id="activityList"></datalist>
+            </div>
+
             <div class="notes-field">
                 <input type="text" id="notes" placeholder="Optional notes (e.g., §63)">
             </div>
 
             <button class="btn-start" id="startBtn">
-                ▶️ Start Writing
+                ▶ START WRITING
             </button>
 
             <button class="btn-done" id="doneBtn">
@@ -258,7 +287,7 @@
 
     <script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
     <script>
-        const DROPBOX_APP_KEY = 'evyhtrp9879xmbe';
+        const DROPBOX_APP_KEY = 'YOUR_DROPBOX_APP_KEY';
         
         let dbx = null;
         let config = {
@@ -323,6 +352,35 @@
             } catch (e) {
                 return false;
             }
+        }
+
+        // ── Activity history ──────────────────────────────────────
+
+        function loadRecentActivities() {
+            const saved = localStorage.getItem('recentActivities');
+            return saved ? JSON.parse(saved) : ['writing'];
+        }
+
+        function saveRecentActivity(activity) {
+            let recent = loadRecentActivities().filter(a => a !== activity);
+            recent.unshift(activity);
+            recent = recent.slice(0, 5);
+            localStorage.setItem('recentActivities', JSON.stringify(recent));
+        }
+
+        function updateActivityDatalist() {
+            const datalist = document.getElementById('activityList');
+            datalist.innerHTML = '';
+            loadRecentActivities().forEach(a => {
+                const option = document.createElement('option');
+                option.value = a;
+                datalist.appendChild(option);
+            });
+        }
+
+        function updateStartButton() {
+            const activity = document.getElementById('activity').value.trim() || 'writing';
+            document.getElementById('startBtn').textContent = `▶ START ${activity.toUpperCase()}`;
         }
 
         // ── Config ────────────────────────────────────────────────
@@ -395,6 +453,10 @@
             }
             try {
                 await doWrite(activity);
+                if (activity !== 'done') {
+                    saveRecentActivity(activity);
+                    updateActivityDatalist();
+                }
             } catch (error) {
                 if (error.status === 401) {
                     setStatus('Session expired, refreshing...', '');
@@ -539,8 +601,15 @@
             document.getElementById('connectBtn').addEventListener('click', connectDropbox);
             document.getElementById('disconnectBtn').addEventListener('click', disconnect);
             document.getElementById('settingsToggle').addEventListener('click', toggleSettings);
-            document.getElementById('startBtn').addEventListener('click', () => writeEntry('writing'));
+            document.getElementById('startBtn').addEventListener('click', () => {
+                const activity = document.getElementById('activity').value.trim() || 'writing';
+                writeEntry(activity);
+            });
             document.getElementById('doneBtn').addEventListener('click', () => writeEntry('done'));
+            document.getElementById('activity').addEventListener('input', updateStartButton);
+            
+            updateActivityDatalist();
+            updateStartButton();
         }
 
         init();
