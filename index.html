@@ -607,6 +607,7 @@
             });
             document.getElementById('doneBtn').addEventListener('click', () => writeEntry('done'));
             document.getElementById('activity').addEventListener('input', updateStartButton);
+            document.getElementById('activity').addEventListener('focus', e => e.target.select());
             
             updateActivityDatalist();
             updateStartButton();
