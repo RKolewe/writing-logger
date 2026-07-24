@@ -1,2 +1,2 @@
-# writing-logger
-Personal writing time logger with Dropbox sync
+# zettel
+Zettelkasten tools (time logger and notes) with Dropbox sync
