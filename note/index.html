@@ -514,25 +514,31 @@
         });
 
         // Enter in title field moves focus to textarea — preventDefault stops
-        // the Enter being typed into the textarea as a newline
+        // the Enter being typed into the textarea as a newline.
+        // setTimeout defers setSelectionRange so Android's soft keyboard
+        // has finished handing off focus before we move the cursor.
         document.getElementById('noteTitle').addEventListener('keydown', e => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 const textarea = document.getElementById('noteContent');
                 textarea.focus();
-                textarea.setSelectionRange(0, 0);
+                setTimeout(() => textarea.setSelectionRange(0, 0), 0);
             }
         });
 
-        // Toggle #untitled tag as the user types (or clears) the title
+        // Toggle #untitled tag as the user types (or clears) the title.
+        // After modifying textarea.value (which resets cursor to end),
+        // explicitly park the cursor at 0 so it's correct when focus arrives.
         document.getElementById('noteTitle').addEventListener('input', () => {
             const title    = document.getElementById('noteTitle').value.trim();
             const textarea = document.getElementById('noteContent');
             const hasTag   = textarea.value.includes('#untitled\n');
             if (!title && !hasTag) {
                 textarea.value = textarea.value.replace('#untagged\n', '#untagged\n#untitled\n');
+                textarea.setSelectionRange(0, 0);
             } else if (title && hasTag) {
                 textarea.value = textarea.value.replace('#untitled\n', '');
+                textarea.setSelectionRange(0, 0);
             }
         });
     }
